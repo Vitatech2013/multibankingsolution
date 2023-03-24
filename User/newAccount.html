@@ -1,0 +1,201 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .form-control {
+        border: 1px solid black;
+        border-radius: 10px;
+    }
+</style><br><br>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function bindbanknames(bankName) {
+    
+    const data = JSON.parse(bankName);
+    let bank = document.getElementById("selectBankName");
+    for (let i = 0; i < data.length; i++) {
+      let option = document.createElement("OPTION");
+      option.innerHTML = data[i].bankname;
+      option.value = data[i].bankname;
+      bank.options.add(option);
+    }
+  }
+
+  function GetBranchName(name) {
+      const getBankPromise = performAjax(
+        "GET",
+        `http://localhost:7736/Admin/getBranchNames?bankname=${event.target.value}`
+      );
+      getBankPromise
+        .then((message) => {
+          banks = JSON.parse(message);
+          banks.map(bank => {
+            document.getElementById("branchname").value = bank.branchname;
+          
+            document.getElementById("ifsccode").value = bank.ifsccode;
+          });
+        })
+        .catch(err => {
+          alert(err.message);
+        })
+    }  
+
+  function loadBankNames() {
+    document.getElementById("cname").value= sessionStorage.getItem("uname");
+    const getTourssPromise = performAjax("GET", "http://localhost:7736/Admin/getBankNames");
+    getTourssPromise
+      .then((response) => {
+         console.log(response);
+        bindbanknames(response);
+      })
+      .catch(err => {
+        alert(err.message);
+      })
+  }
+
+    function AddNewAccount() {
+	event.preventDefault();
+
+        const mobileno = sessionStorage.getItem("mobno");
+        const emailid  = sessionStorage.getItem("emailid");
+        document.getElementById("cname").value= sessionStorage.getItem("uname");
+        const customername = document.getElementById("cname").value;
+        const bankname = document.getElementById("selectBankName").value;
+        const branchname = document.getElementById("branchname").value;
+        const ifsccode = document.getElementById("ifsccode").value;
+        const aadharno = document.getElementById("aadharno").value;
+        const fullname = document.getElementById("fullname").value;
+        const fathername = document.getElementById("fathername").value;
+        const state = document.getElementById("state").value;
+        const fulladdress = document.getElementById("fulladdress").value;
+        const password="empty";
+        const accountno="pending";
+        const status="Deactive";
+        const customertype="New";
+        const amount=0;
+        const getRegPromise = performAjax(
+            "POST",
+            `http://localhost:7736/User/addNewBankAccount`,
+            JSON.stringify({ customertype,customername, password,accountno,amount, mobileno,emailid,bankname,branchname,ifsccode,fullname,fathername,state,fulladdress,status })
+        );
+        getRegPromise
+            .then((regPromise) => {
+                alert('Registration Successfully Completed, Pending at Branch Manager');
+                document.getElementById("cname").value = "";
+                document.getElementById("selectBankName").value = "";
+                document.getElementById("branchname").value = "";
+                document.getElementById("ifsccode").value = "";
+                document.getElementById("aadharno").value = "";
+                document.getElementById("fullname").value = "";
+                document.getElementById("state").value = "";
+                document.getElementById("fulladdress").value = "";
+                document.getElementById("fathername").value="";
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+</script>
+<body onload="loadBankNames()">
+<form onsubmit="AddNewAccount()">
+<center>
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><label style="color:purple"><U>NEW BANK ACCOUNT REGISTRATION</U></label></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Customer name:</label></div>
+        <div class="col-sm-3"><input type="text" class="form-control" disabled id="cname" name="cname"
+                placeholder="enter your name"></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Bank name:</label></div>
+        <div class="col-sm-3"><select id="selectBankName" onchange="GetBranchName(this)" class="form-control" required>
+            <option value="">-------select------</option>
+        </select></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Branch Name:</label></div>
+        <div class="col-sm-3"><input type="text" disabled class="form-control" id="branchname" name="branchname"
+            placeholder="BranchName"></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label>Ifsc code:</label></div>
+        <div class="col-sm-3"><input type="text" disabled name="code" class="form-control" id="ifsccode"
+                placeholder="Ifsc code">
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Aadhar number:</label></div>
+        <div class="col-sm-3"><input type="number" class="form-control" id="aadharno" placeholder="Aadhar number" required>
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Full name:</label></div>
+        <div class="col-sm-3"><input type="text" class="form-control" id="fullname" name="fullname"
+                placeholder="enter your  fullname" required></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Father name:</label></div>
+        <div class="col-sm-3"><input type="text" class="form-control" id="fathername" name="fathername"
+                placeholder="enter father name" required></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">State:</label>:</label></div>
+        <div class="col-sm-3"><input type="text" class="form-control" name="state" id="state"
+                placeholder="enter your state" required></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Full Address:</label></div>
+        <div class="col-sm-3"><textarea class="form-control" placeholder="Full Address" id="fulladdress" required></textarea></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+
+
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><button type="submit" class="btn btn-success" >Send request</button></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+
+</center>
+</body>

@@ -1,0 +1,94 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+<style>
+    .form-control {
+        border: 1px solid black;
+        border-radius: 10px;
+    }
+</style><br><br>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function AddBank() {
+
+       event.preventDefault();
+        const bankname = document.getElementById("bkname").value;
+        const branchname = document.getElementById("bnname").value;
+        const ifsccode = document.getElementById("code").value;
+        const getRegPromise = performAjax(
+            "POST",
+            `http://localhost:7736/Admin/addBank`,
+            JSON.stringify({ bankname, branchname, ifsccode})
+        );
+        getRegPromise
+            .then((regPromise) => {
+                alert('Added');
+                document.getElementById("bkname").value = "";
+                document.getElementById("bnname").value = "";
+                document.getElementById("code").value = "";
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+</script>
+<form onsubmit="AddBank()">
+<center>
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><label style="color:purple"><U>ADD BANKS</U></label></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label>Bank name:</label></div>
+        <div class="col-sm-3"><input type="text" name="bkname" class="form-control" id="bkname"
+                placeholder="bank name" required>
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label>Branch name:</label></div>
+        <div class="col-sm-3"><input type="text" name="bnname" class="form-control" id="bnname"
+                placeholder="branch name" required>
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label>Ifsc code:</label></div>
+        <div class="col-sm-3"><input type="text" placeholder="Ifsc code" name="code" class="form-control" id="code" required>
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><button type="submit" class="btn btn-success">Add</button></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+
+</center>
+</form>

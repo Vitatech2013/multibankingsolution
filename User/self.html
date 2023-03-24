@@ -1,0 +1,91 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .form-control {
+        border: 1px solid black;
+        border-radius: 10px;
+    }
+</style><br><br>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function AddAmount() {
+event.preventDefault();
+        const accountno=sessionStorage.getItem("accountno");        
+            const getUsersPromise = performAjax("GET", `http://localhost:7736/User/getprevousamount?accountno=${accountno}`);
+            getUsersPromise
+            .then((data) => {
+                const amounts = JSON.parse(data);
+                amounts.map(rec => {
+                    const id= sessionStorage.getItem("id");
+                    var amt = parseInt(document.getElementById("amount").value);
+                    var prev = parseInt(rec.amount);
+                    var amount = (amt + prev);
+                    const getRegPromise = performAjax(
+                        "PUT",
+                        `http://localhost:7736/User/updateAmount/${id}`,
+                        JSON.stringify({ amount})
+                    );
+                    getRegPromise
+                        .then((regPromise) => {
+                            alert('Amount Added');
+                            document.getElementById("amount").value = "";
+                        
+                        })
+                        .catch(err => {
+                            alert(err.message);
+                        })
+                   
+                });
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+        
+    }
+</script>
+<body>
+<form onsubmit="AddAmount()">
+<center>
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><label style="color:purple"><U> SELF ACCOUNT</U></label></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Amount:</label></div>
+        <div class="col-sm-3"><input type="number" class="form-control"  id="amount" name="amount"
+                placeholder="Amount" required></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <br>
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><button type="submit" class="btn btn-success" >Add</button></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+
+</center>
+</form>
+</body>

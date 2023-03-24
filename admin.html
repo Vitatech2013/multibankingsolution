@@ -1,0 +1,151 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .form-control {
+        border: 1px solid black;
+        border-radius: 10px;
+    }
+</style><br><br>
+
+<script>
+    let users = [];
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function AdminLogin() {
+event.preventDefault();
+        const username = document.getElementById("uname").value;
+        const password = document.getElementById("password").value;
+        const getLoginPromise = performAjax(
+            "GET",
+            `http://localhost:7736/Admin/adminlogin?username=${username}&password=${password}`
+        );
+        getLoginPromise
+            .then((loginPromise) => {
+                if (loginPromise == []) {
+                    alert('Login Faild');
+                }
+                else {
+                const data = JSON.parse(loginPromise);
+                const admin = [data].map(record => {
+                    return record;
+                });
+                admin.map(rec => {
+                    sessionStorage.setItem("_id", rec._id);
+                    sessionStorage.setItem("username", rec.username);
+                    sessionStorage.setItem("password", rec.password);
+                    window.top.location.href = "admin";
+                });
+            }
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+
+    function SendPassword() {
+        event.preventDefault();
+        const emailid = document.getElementById("emailid").value;
+        const searchPromise = performAjax(
+            "GET",
+            `http://localhost:7736/Admin/forgotpassword?emailid=${emailid}`
+        );
+        searchPromise
+        .then((response) => {
+            if (response == '[]') {
+                alert('Invalid Email Id');
+            }
+            else {
+            alert('Credentials Sent to Your Email');
+            }
+        })
+        .catch(err => {
+            alert(err.message);
+        })
+    }
+
+</script>
+
+<!-- Modal PopUp -->
+<div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Forgot Password</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-1"></div>
+                    <div class="col-sm-3"><label>Enter&nbsp;Valid&nbsp;EmailId</label></div>
+                    <div class="col-sm-7">
+                        <input type="email" name="emailid" id="emailid" class="form-control" placeholder="Email Id" required>
+                    </div>
+                    <div class="col-sm-1"></div>
+                </div><br><br><br>
+                <div class="row">
+                    <div class="col-sm-6"></div>
+                    <div class="col-md-5">
+                        <button type="button" id="submit" class="btn btn-info" data-dismiss="modal" onclick="SendPassword()">Send Password</button>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                    <div class="col-sm-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>  
+<form onsubmit="AdminLogin()">
+<center>
+    <div class="row">
+        <div class="col-md-5"></div>
+        <div class="col-md-2"><label style="color:purple"><U>ADMIN LOGIN</U></label></div>
+        <div class="col-md-5"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-md-4"></div>
+        <div class="col-md-4"><label>User name</label>
+            <input type="text" name="uname" class="form-control" id="uname" placeholder="enter user name" required>
+        </div>
+        <div class="col-md-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-md-4"></div>
+        <div class="col-md-4"><label>Password</label>
+            <input type="password" name="password" class="form-control" id="password" placeholder="enter password" required>
+        </div>
+        <div class="col-md-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-md-5"></div>
+        <div class="col-md-2"><button type="submit"  class="btn btn-success">Login</button></div>
+        <div class="col-md-5"></div>
+    </div><br>
+            <div class="row">
+                <div class="col-sm-7"></div>
+                <div class="col-sm-3"><a href="" data-toggle="modal" data-target="#myModal" style="text-decoration: none" target="iframe"> <h5>Forgot Password...?</a></h5></div>
+                <div class="col-sm-2"></div>
+            </div>
+</center>
+</form>

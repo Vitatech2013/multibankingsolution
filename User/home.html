@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+        <title>Multi Banking Solution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <style>
+        .sidenav {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 20%;
+            left: 0;
+            background-color: #2F4F4F;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+        }
+
+        .sidenav a {
+            padding: 8px 8px 8px 12px;
+            text-decoration: none;
+            font-size: 20px;
+            color: white;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidenav a:hover {
+            background-color: #DB7093;
+        }
+
+        .sidenav .closebtn {
+            position: absolute;
+            top: 0;
+            right: 0px;
+            font-size: 25px;
+            margin-left: 60px;
+        }
+
+        @media screen and (max-height: 450px) {
+            .sidenav {
+                padding-top: 15px;
+            }
+
+            .sidenav a {
+                font-size: 18px;
+            }
+        }
+    </style>
+    <script>
+        function openNav() {
+
+            document.getElementById("mySidenav").style.width = "200px";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidenav").style.width = "0";
+        }
+    </script>
+</head>
+
+<body>
+    <div style="background-color:#DB7093; height:20%; text-align: center; margin-top: 0px;">
+        <br>
+        <h1 style="top: 50%; transform: translateY(-50%)">
+            MULTI BANKING SYSTEM</h1>
+    </div>
+
+    <div style="background-color:#2F4F4F">
+        <div id="mySidenav" class="sidenav">
+            <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+            <a href="http://localhost:5894/user/viewProfile" target="iframe">Profile</a>
+            <a href="http://localhost:5894/user/self" target="iframe">Self Account</a>
+            <a href="http://localhost:5894/user/available" target="iframe">Available Balance</a>
+            <a href="http://localhost:5894/user/transferamount" target="iframe">Transfer Amount</a>
+            <a href="http://localhost:5894/user/viewtransaction" target="iframe">View transactions</a>
+            <a href="http://localhost:5894/user/viewAllAccounts" target="iframe">View Accounts</a>
+            <a href="http://localhost:5894/user/changeActPassword" target="iframe">Change Password</a>
+            <a href="http://localhost:5894/">Logout</a>
+
+        </div>
+        <span style="font-size:30px;cursor:pointer; color:white" onclick="openNav()">&#9776; User Module</span>
+    </div>
+    <center>
+        <iframe src="" name="iframe" id="iframe" style="width: 99%; height: 540px; border: none;"></iframe>
+    </center>
+</body>
+
+</html>

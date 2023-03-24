@@ -1,0 +1,196 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<html>
+<style>
+  .customers {
+  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.customers td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.customers tr:nth-child(even){background-color: #f2f2f2;}
+
+.customers tr:hover {background-color: #ddd;}
+
+.customers th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #4CAF50;
+  color: white;
+}
+</style>
+
+<body onload="loadData()">
+  <center>
+    <h3>View Banks</h3>
+    <table id="bankdetails" class="customers" style="width: 1000px;"></table>
+  </center>
+</body>
+
+</html>
+<div class="container">
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Edit Bank</h4>
+        </div>
+        <div class="modal-body">
+		<form onsubmit="updateBanks()">
+          <div class="row">
+            <div class="col-md-3"></div>
+            <div class="col-md-2"><label for="">Bank Name</label></div>
+            <div class="col-md-4"><input type="text" class="form-control" id="bankame" placeholder="Bank Name"><input
+                type="hidden" id="txtid"></div>
+            <div class="col-md-3"></div>
+          </div><br>
+
+          <div class="row">
+            <div class="col-md-3"></div>
+            <div class="col-md-2"><label for="">Branch Name</label></div>
+            <div class="col-md-4"><input type="text" class="form-control" id="branchname" placeholder="Branch Name" required>
+            </div>
+            <div class="col-md-3"></div>
+          </div><br>
+
+          <div class="row">
+            <div class="col-md-3"></div>
+            <div class="col-md-2"><label for="">IFSC Code</label></div>
+            <div class="col-md-4"><input type="text" class="form-control" id="ifsc" placeholder="IfSC Code" required></div>
+            <div class="col-md-3"></div>
+          </div>
+            <br> <br> <br>
+            <div class="row">
+              <div class="col-md-5"></div>
+              <div class="col-md-3"><button type="submit" class="btn btn-info" >Update</button>
+              </div>
+              <div class="col-md-4"></div>
+            </div><br>
+			</form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+  <script>
+    function performAjax(httpMethod, url, params) {
+      const myPromise = new Promise((resolve, reject) => {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            resolve(this.responseText);
+          }
+          if (this.status == 500) {
+            reject({ error: true, message: "ServerError" });
+          }
+          if (this.status == 404) {
+            reject({ error: true, message: "Resource not found" });
+          }
+        };
+        xhttp.open(httpMethod, url, true);
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        params ? xhttp.send(params) : xhttp.send();
+      });
+      return myPromise;
+    }
+
+    function editBank(event) {
+
+      const getPostsPromise = performAjax("GET", `http://localhost:7736/Admin/${event.target.id}`);
+      getPostsPromise
+        .then((responseData) => {
+          banks = JSON.parse(responseData);
+          if (banks._id === event.target.id) {
+            $("#myModal").modal();
+            document.getElementById("txtid").value = banks._id;
+            document.getElementById("bankame").value = banks.bankname;
+            document.getElementById("branchname").value = banks.branchname;
+            document.getElementById("ifsc").value = banks.ifsccode;
+          }
+        })
+        .catch(err => {
+          alert(err.message);
+        })
+    }
+
+    function updateBanks() {
+	event.preventDefault();
+      const id = document.getElementById("txtid").value;
+
+      const bankname = document.getElementById("bankame").value;
+      const branchname = document.getElementById("branchname").value;
+      const ifsccode = document.getElementById("ifsc").value;
+      const getpostsAppPromise = performAjax('PUT', `http://localhost:7736/Admin/${id}`,
+        JSON.stringify({ bankname, branchname, ifsccode}));
+      getpostsAppPromise
+        .then((message) => {
+          loadData();
+          alert("Update Success");
+          $('#myModal').modal("hide");
+        })
+        .catch(err => {
+          alert(err.message);
+        })
+    }
+
+    function loadData() {
+      const getFilesPromise = performAjax("GET", "http://localhost:7736/Admin/viewBanks");
+      getFilesPromise
+        .then((BankList) => {
+          showBankDetails(BankList);
+        })
+        .catch(err => {
+          alert(err.message);
+        })
+    }
+
+    function showBankDetails(data) {
+      const records = JSON.parse(data);
+      let tableRow = '';
+      const tableHeader = `<tr style="background: lavender;"><th>S.No.</th><th>Bank Name</th><th>Branch Name</th><th>IFSC Code</th><th>Action</th></tr>`;
+      if (records.length > 0) {
+        tableRow = records.map((rec, index) => {
+          let editButton = `<a id="${rec._id}" class="glyphicon glyphicon-pencil" data-toggle="modal" data-target="#myModal" style="color:blue; font-size:22px;" onclick="editBank(event)"></a>`;
+          let deleteButton = `<a id="${rec._id}" class="fa fa-trash" style="color:blue; font-size:22px;" onclick="deleteBank(event)"></a>`;
+          return `<tr><td align="right">${index + 1}</td><td>${rec.bankname}</td><td>${rec.branchname}</td><td>${rec.ifsccode}</td><td align="center">${editButton}&nbsp;&nbsp;&nbsp;&nbsp;${deleteButton}</td></tr>`;
+        });
+        document.getElementById("bankdetails").innerHTML = `${tableHeader}${tableRow.join('')}`;
+      }
+      else {
+        tableRow = `<tr><td colspan="7" align="center">No Data Found</td></tr>`;
+        document.getElementById("bankdetails").innerHTML = `${tableHeader}${tableRow}`;
+      }
+    }
+
+    function deleteBank(event) {
+      var result = confirm("Are you sure you want to delete?");
+      if (result) {
+        const getDeletePromise = performAjax('DELETE', `http://localhost:7736/Admin/${event.target.id}`);
+        getDeletePromise
+          .then((response) => {
+            showBankDetails(response);
+          })
+          .catch(err => {
+            alert(err.message);
+          })
+      }
+    }
+  </script>

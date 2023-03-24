@@ -1,0 +1,181 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .form-control {
+        border: 1px solid black;
+        border-radius: 10px;
+    }
+</style><br><br>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function SendPassword() {
+        event.preventDefault();
+        const accountno = document.getElementById("actnooo").value;
+        const emailid = document.getElementById("emailid").value;
+        const searchPromise = performAjax(
+            "GET",
+            `http://localhost:7736/User/useractforgotpassword?accountno=${accountno}&emailid=${emailid}`
+        );
+        searchPromise
+        .then((response) => {
+            if (response == '[]') {
+                alert('Invalid Email Id or Account Number');
+            }
+            else {
+            alert('Credentials Sent to Your Email');
+            }
+        })
+        .catch(err => {
+            alert(err.message);
+        })
+    }
+
+    function UserBankLogin() {
+        event.preventDefault();
+        const customername = document.getElementById("uname").value;
+        const password = document.getElementById("password").value;
+        const accountno = document.getElementById("accnum").value;
+
+        const getLoginPromise = performAjax(
+            "GET",
+            `http://localhost:7736/User/userBankLogin?customername=${customername}&password=${password}&accountno=${accountno}`
+        );
+        getLoginPromise
+            .then((loginPromise) => {
+                if (loginPromise == "" || loginPromise == null) {
+                    alert('Login Faild');
+                }
+                else {
+                    const data = JSON.parse(loginPromise);
+                    const users = [data].map(record => {
+                        return record;
+                    });
+                    users.map(user => {
+                        if (user.status == "Activated") {
+                            sessionStorage.setItem("uname", user.customername);
+                            sessionStorage.setItem("id", user._id);
+                            sessionStorage.setItem("accountno", user.accountno);
+                            sessionStorage.setItem("password", user.password);
+                            window.top.location.href = "user";
+                        }
+                        else {
+                            alert("He he he Too Smart ha!\nYou are Not Approved from BankManager?");
+                        }
+
+                    });
+                }
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+
+</script>
+<!-- Modal PopUp -->
+<div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Forgot Password</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-1"></div>
+                    <div class="col-sm-3"><label>Account Number</label></div>
+                    <div class="col-sm-7">
+                        <input type="number" name="actnooo" id="actnooo" class="form-control" placeholder="Account Number" required>
+                    </div>
+                    <div class="col-sm-1"></div>
+                </div><br><br><br>
+                <div class="row">
+                    <div class="col-sm-1"></div>
+                    <div class="col-sm-3"><label>Valid&nbsp;EmailId</label></div>
+                    <div class="col-sm-7">
+                        <input type="email" name="emailid" id="emailid" class="form-control" placeholder="Email Id" required>
+                    </div>
+                    <div class="col-sm-1"></div>
+                </div><br><br><br>
+                <div class="row">
+                    <div class="col-sm-6"></div>
+                    <div class="col-md-5">
+                        <button type="button" id="submit" class="btn btn-info" data-dismiss="modal" onclick="SendPassword()">Send Password</button>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                    <div class="col-sm-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>  
+<form onsubmit="UserBankLogin()">
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><label style="color:purple"><U>Bank Details Login</U></label></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4"><label>User Name:</label>
+            <input type="text" name="uname" class="form-control" id="uname" placeholder="User Name" required>
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4"><label>Account Number:</label>
+            <input type="number" name="accnum" class="form-control" id="accnum" placeholder="Account Number" required>
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4"><label>Bank Password:</label>
+            <input type="password" name="password" class="form-control" id="password" placeholder="Bank Password"
+                required>
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><button type="submit" class="btn btn-success">Login</button></div>
+        <div class="col-md-5"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-2"><a href="http://localhost:5894/user/newAccount" target="iframe">Register if New Bank
+                Account</a></div>
+        <div class="col-sm-3"><a href="http://localhost:5894/user/existing" target="iframe">Register if Existing
+                Bank Account</a></div>
+        <div class="col-md-3"></div>
+    </div>
+    <br>
+            <div class="row">
+                <div class="col-sm-7"></div>
+                <div class="col-sm-3"><a href="" data-toggle="modal" data-target="#myModal" style="text-decoration: none" target="iframe"> <h5>Forgot Password...?</a></h5></div>
+                <div class="col-sm-2"></div>
+            </div>
+</form>

@@ -1,0 +1,233 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+<html>
+<style>
+  .customers {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 80%;
+    margin-left: 150px;
+  }
+
+  .customers td,
+  #customers th {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+
+  .customers tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+
+  .customers tr:hover {
+    background-color: #ddd;
+  }
+
+  .customers th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: center;
+    background-color: #4CAF50;
+    color: white;
+
+  }
+</style>
+
+<body onload="loadData()">
+  <div class="container">
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" role="dialog">
+      <div class="modal-dialog modal-lg">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Edit Customer Status</h4>
+          </div>
+          <div class="modal-body">
+		  <form onsubmit="updateCustomer()">
+            <div class="row">
+              <div class="col-md-3"></div>
+              <div class="col-md-2"><label for="">Customer Name</label></div>
+              <div class="col-md-4"><input type="text" class="form-control" disabled id="cname" placeholder="cname" required>
+                <input type="hidden" id="txtid"></div>
+              <div class="col-md-3"></div>
+            </div><br>
+            <div class="row">
+              <div class="col-md-3"></div>
+              <div class="col-md-2"><label for="">Bank Name</label></div>
+              <div class="col-md-4"><input type="text" class="form-control" id="bankame" disabled
+                  placeholder="Bank Name"><input type="hidden" id="txtid"></div>
+              <div class="col-md-3"></div>
+            </div><br>
+
+            <div class="row">
+              <div class="col-md-3"></div>
+              <div class="col-md-2"><label for="">Branch Name</label></div>
+              <div class="col-md-4"><input type="text" class="form-control" id="branchname" disabled
+                  placeholder="Branch Name">
+              </div>
+              <div class="col-md-3"></div>
+            </div><br>
+
+            <div class="row">
+              <div class="col-md-3"></div>
+              <div class="col-md-2"><label for="">IFSC Code</label></div>
+              <div class="col-md-4"><input type="text" class="form-control" id="ifsc" disabled placeholder="IfSC Code">
+              </div>
+              <div class="col-md-3"></div>
+            </div>
+            <br>
+            <div class="row">
+              <div class="col-sm-3"></div>
+              <div class="col-sm-2"><label for="">Status:</label></div>
+              <div class="col-sm-4"><select id="selectStatus" class="form-control" required>
+                  <option value="">--select--</option>
+                  <option value="Activated">Activated</option>
+                  <option value="Deactive">Deactive</option>
+                </select></div>
+              <div class="col-sm-3"></div>
+            </div><br>
+            <div class="row">
+              <div class="col-md-5"></div>
+              <div class="col-md-3"><button type="submit" class="btn btn-info"
+                 >Update</button>
+              </div>
+              <div class="col-md-4"></div>
+            </div><br>
+			</form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+  <center>
+    <h3>View Customers</h3>
+    <table id="users" class="customers"></table>
+    <br><br><br>
+  </center>
+</body>
+
+</html>
+<script>
+  function performAjax(httpMethod, url, params) {
+    const myPromise = new Promise((resolve, reject) => {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          resolve(this.responseText);
+        }
+        if (this.status == 500) {
+          reject({ error: true, message: "ServerError" });
+        }
+        if (this.status == 404) {
+          reject({ error: true, message: "Resource not found" });
+        }
+      };
+      xhttp.open(httpMethod, url, true);
+      xhttp.setRequestHeader("Content-Type", "application/json");
+      params ? xhttp.send(params) : xhttp.send();
+    });
+    return myPromise;
+  }
+
+  function loadData() {
+    const getUsersPromise = performAjax("GET", "http://localhost:7736/Manager/viewCustomers");
+    getUsersPromise
+      .then((usersList) => {
+        showCustomersDetails(usersList);
+      })
+      .catch(err => {
+        alert(err.message);
+      })
+  }
+
+  function showCustomersDetails(data) {
+    const records = JSON.parse(data);
+    let tableRow = '';
+    const tableHeader = `<tr style="background: lavender"><th>S.No.</th><th>UserName</th><th>MobileNo</th><th>Emailid</th><th>BankName</th><th>BranchName</th><th>Ifsccode</th><th>FullName</th><th>FatherName</th><th>Account Number</th><th>Status</th><th>Action</th></tr>`;
+    if (records.length > 0) {
+      tableRow = records.map((rec, index) => {
+        let editButton = `<a id="${rec._id}" class="glyphicon glyphicon-pencil" data-toggle="modal" data-target="#myModal" style="color:blue; font-size:22px;" onclick="editCustomer(event)"></a>`;
+        return `<tr><td align="right">${index + 1}</td><td>${rec.customername}</td><td>${rec.mobileno}</td><td>${rec.emailid}</td><td>${rec.bankname}</td><td>${rec.branchname}</td><td>${rec.ifsccode}</td><td>${rec.fullname}</td><td>${rec.fathername}</td><td>${rec.accountno}</td><td>${rec.status}</td><td>${editButton}</td></tr>`;
+      });
+      document.getElementById("users").innerHTML = `${tableHeader}${tableRow.join('')}`;
+    }
+    else {
+      tableRow = `<tr><td colspan="12" align="center">No Data Found</td></tr>`;
+      document.getElementById("users").innerHTML = `${tableHeader}${tableRow}`;
+    }
+  }
+
+  function editCustomer(event) {
+
+    const getPostsPromise = performAjax("GET", `http://localhost:7736/Manager/${event.target.id}`);
+    getPostsPromise
+      .then((responseData) => {
+        customers = JSON.parse(responseData);
+        if (customers._id === event.target.id) {
+          $("#myModal").modal();
+          document.getElementById("txtid").value = customers._id;
+          document.getElementById("cname").value = customers.customername;
+          document.getElementById("bankame").value = customers.bankname;
+          document.getElementById("branchname").value = customers.branchname;
+          document.getElementById("ifsc").value = customers.ifsccode;
+          sessionStorage.setItem("acttype", customers.customertype);
+          sessionStorage.setItem("emai", customers.emailid);
+          sessionStorage.setItem("accno", customers.accountno);
+          sessionStorage.setItem("pwd", customers.password);
+        }
+      })
+      .catch(err => {
+        alert(err.message);
+      })
+  }
+
+  function updateCustomer() {
+  event.preventDefault();
+    const accountno = Math.floor((Math.random() * 100000000000) + 1);
+    const id = document.getElementById("txtid").value;
+    const status = document.getElementById("selectStatus").value;
+    const password = Math.random().toString(36).slice(-8);
+    const customertype = sessionStorage.getItem("acttype");
+    const bankname = document.getElementById("bankame").value
+
+    if (customertype == "Existing") {
+      const getCustBankAppPromise = performAjax('PUT', `http://localhost:7736/Manager/${id}`,
+        JSON.stringify({ bankname, accountno:sessionStorage.getItem("accno"), status, password:sessionStorage.getItem("pwd"), emailid:sessionStorage.getItem("emai") }));
+      getCustBankAppPromise
+        .then((message) => {
+          loadData();
+          alert("Status Updated");
+          $('#myModal').modal("hide");
+        })
+        .catch(err => {
+          alert(err.message);
+        })
+    }
+    else {
+      const getCustBankAppPromise = performAjax('PUT', `http://localhost:7736/Manager/${id}`,
+        JSON.stringify({ bankname, accountno, status, password, emailid:sessionStorage.getItem("emai") }));
+      getCustBankAppPromise
+        .then((message) => {
+          loadData();
+          alert("Status Updated");
+          $('#myModal').modal("hide");
+        })
+        .catch(err => {
+          alert(err.message);
+        })
+    }
+
+  }
+
+</script>

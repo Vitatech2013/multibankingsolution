@@ -1,0 +1,102 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<html>
+<style>
+ .customers {
+  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.customers td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.customers tr:nth-child(even){background-color: #f2f2f2;}
+
+.customers tr:hover {background-color: #ddd;}
+
+.customers th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #4CAF50;
+  color: white;
+}
+</style>
+
+<body onload="loadData()">
+  <center>
+    <h3>View Managers</h3>
+    <table id="managerdetails" class="customers" style="width: 1000px;"></table>
+  </center>
+</body>
+
+</html>
+  <script>
+    function performAjax(httpMethod, url, params) {
+      const myPromise = new Promise((resolve, reject) => {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            resolve(this.responseText);
+          }
+          if (this.status == 500) {
+            reject({ error: true, message: "ServerError" });
+          }
+          if (this.status == 404) {
+            reject({ error: true, message: "Resource not found" });
+          }
+        };
+        xhttp.open(httpMethod, url, true);
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        params ? xhttp.send(params) : xhttp.send();
+      });
+      return myPromise;
+    }
+   
+    function loadData() {
+      const getFilesPromise = performAjax("GET", "http://localhost:7736/Admin/viewManagers");
+      getFilesPromise
+        .then((BankList) => {
+          showManagerDetails(BankList);
+        })
+        .catch(err => {
+          alert(err.message);
+        })
+    }
+
+    function showManagerDetails(data) {
+      const records = JSON.parse(data);
+      let tableRow = '';
+      const tableHeader = `<tr style="background: lavender;"><th>S.No.</th><th>UserName</th><th>Mobile Number</th><th>Address</th><th>Emailid</th><th>Bankname</th><th>Branchname</th><th>Action</th></tr>`;
+      if (records.length > 0) {
+        tableRow = records.map((rec, index) => {
+          let deleteButton = `<a id="${rec._id}" class="fa fa-trash" style="color:blue; font-size:22px;" onclick="deleteManager(event)"></a>`;
+          return `<tr><td align="right">${index + 1}</td><td>${rec.username}</td><td>${rec.mobileno}</td><td>${rec.address}</td><td>${rec.emailid}</td><td>${rec.bankname}</td><td>${rec.branchname}</td><td align="center">${deleteButton}</td></tr>`;
+        });
+        document.getElementById("managerdetails").innerHTML = `${tableHeader}${tableRow.join('')}`;
+      }
+      else {
+        tableRow = `<tr><td colspan="7" align="center">No Data Found</td></tr>`;
+        document.getElementById("managerdetails").innerHTML = `${tableHeader}${tableRow}`;
+      }
+    }
+
+    function deleteManager(event) {
+      var result = confirm("Are you sure you want to delete?");
+      if (result) {
+        const getDeletePromise = performAjax('DELETE', `http://localhost:7736/Admin/deletemanager/${event.target.id}`);
+        getDeletePromise
+          .then((response) => {
+            showManagerDetails(response);
+          })
+          .catch(err => {
+            alert(err.message);
+          })
+      }
+    }
+  </script>

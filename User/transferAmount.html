@@ -1,0 +1,297 @@
+<html>
+<title>Transfer Amount</title>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .form-control {
+        border: 1px solid black;
+        border-radius: 10px;
+    }
+</style><br><br>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function loadBankNames() {
+        document.getElementById("facno").value = sessionStorage.getItem("accountno");
+        document.getElementById("custname").value = sessionStorage.getItem("uname");
+        document.getElementById("divSelf").style.display = "none";
+        document.getElementById("divOthers").style.display = "none";
+        loadBankAccount();
+    }
+    function Gettype(name) {
+        if (document.getElementById("selectType").value == "Own Accounts") {
+            document.getElementById("divSelf").style.display = "block";
+            document.getElementById("divOthers").style.display = "none";
+        }
+        else {
+            document.getElementById("divSelf").style.display = "none";
+            document.getElementById("divOthers").style.display = "block";
+        }
+    }
+
+    function bindBankAccounts(bankAccount) {
+        const data = JSON.parse(bankAccount);
+        let bank = document.getElementById("selectAccount");
+        for (let i = 0; i < data.length; i++) {
+            let option = document.createElement("OPTION");
+            option.innerHTML = data[i].accountno;
+            option.value = data[i].accountno;
+            if (data[i].accountno !== sessionStorage.getItem("accountno")) {
+                bank.options.add(option);
+            }
+        }
+    }
+
+    function loadBankAccount() {
+        const getTourssPromise = performAjax("GET", "http://localhost:7736/User/getBankAccounts");
+        getTourssPromise
+            .then((response) => {
+                bindBankAccounts(response);
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+
+    function addTransaction() {
+        if (document.getElementById("selectType").value == "Own Accounts") {
+            const fromActNumber = document.getElementById("facno").value;
+            const customerName = document.getElementById("custname").value;
+            const toActNumber = document.getElementById("selectAccount").value;
+            const holdername = document.getElementById("custname").value;
+            const amount = document.getElementById("txtamounts").value;
+            var time = new Date();
+            var time1 = time.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+            var currentDate = new Date();
+            var day = currentDate.getDate();
+            var month = currentDate.getMonth() + 1;
+            var year = currentDate.getFullYear();
+            const date = day + "-" + month + "-" + year + " " + time1;
+            const getRegPromise = performAjax(
+                "POST",
+                `http://localhost:7736/User/addTransaction`,
+                JSON.stringify({ fromActNumber, customerName, toActNumber, holdername, amount, date })
+            );
+            getRegPromise
+                .then((regPromise) => {
+                    alert('Amount Transfered Successfully');
+                    const accountno = sessionStorage.getItem("accountno");
+                    const getUsersPromise = performAjax("GET", `http://localhost:7736/User/getprevousamount?accountno=${accountno}`);
+                    getUsersPromise
+                        .then((data) => {
+                            const profile = JSON.parse(data);
+                            profile.map(rec => {
+                                var prevamount = parseInt(rec.amount);
+                                var newamount = parseInt(document.getElementById("txtamounts").value);
+                                var amount = (prevamount - newamount);
+
+                                const id = sessionStorage.getItem("id");
+                                const getRegPromise = performAjax(
+                                    "PUT",
+                                    `http://localhost:7736/User/updateAmount/${id}`,
+                                    JSON.stringify({ amount })
+                                );
+                                getRegPromise
+                                    .then((regPromise) => {
+                                        updateToAccount(toActNumber);
+                                        document.getElementById("amount").value = "";
+                                    })
+                                    .catch(err => {
+                                        alert(err.message);
+                                    })
+                            });
+                        })
+                        .catch(err => {
+                            alert(err.message);
+                        })
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+        }
+        else {
+            const fromActNumber = document.getElementById("facno").value;
+            const toActNumber = document.getElementById("tacno").value;
+            const holdername = document.getElementById("txtholdername").value;
+            const amount = document.getElementById("amount").value;
+            var time = new Date();
+            var time1 = time.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+            var currentDate = new Date();
+            var day = currentDate.getDate();
+            var month = currentDate.getMonth() + 1;
+            var year = currentDate.getFullYear();
+            const date = day + "-" + month + "-" + year + " " + time1;
+            const customerName = sessionStorage.getItem("uname");
+            const getRegPromise = performAjax(
+                "POST",
+                `http://localhost:7736/User/addTransaction`,
+                JSON.stringify({ fromActNumber, customerName, toActNumber, holdername, amount, date })
+            );
+            getRegPromise
+                .then((regPromise) => {
+                    alert('Amount Transfered Successfully');
+                    const accountno = sessionStorage.getItem("accountno");
+                    const getUsersPromise = performAjax("GET", `http://localhost:7736/User/getprevousamount?accountno=${accountno}`);
+                    getUsersPromise
+                        .then((data) => {
+                            const profile = JSON.parse(data);
+                            profile.map(rec => {
+                                var prevamount = parseInt(rec.amount);
+                                var newamount = parseInt(document.getElementById("amount").value);
+                                var amount = (prevamount - newamount);
+
+                                const id = sessionStorage.getItem("id");
+                                const getRegPromise = performAjax(
+                                    "PUT",
+                                    `http://localhost:7736/User/updateAmount/${id}`,
+                                    JSON.stringify({ amount })
+                                );
+                                getRegPromise
+                                    .then((regPromise) => {
+                                        document.getElementById("amount").value = "";
+                                    })
+                                    .catch(err => {
+                                        alert(err.message);
+                                    })
+                            });
+                        })
+                        .catch(err => {
+                            alert(err.message);
+                        })
+                })
+                .catch(err => {
+                    alert(err.message);
+                })
+        }
+        function updateToAccount(toAccount) {
+            const getUsersPromise = performAjax("GET", `http://localhost:7736/User/getprevousamount?accountno=${toAccount}`);
+            getUsersPromise
+                .then((data) => {
+                    const profile = JSON.parse(data);
+                    profile.map(rec => {
+                        var prevamount = parseInt(rec.amount);
+                        var newamount = parseInt(document.getElementById("txtamounts").value);
+                        var amount = (prevamount + newamount);
+                        const getRegPromise = performAjax(
+                            "PUT",
+                            `http://localhost:7736/User/updateAmount/${rec._id}`,
+                            JSON.stringify({ amount })
+                        );
+                        getRegPromise
+                            .then((regPromise) => {
+                                document.getElementById("amount").value = "";
+                            })
+                            .catch(err => {
+                                alert(err.message);
+                            })
+                    })
+                })
+        }
+    }
+</script>
+
+<body onload="loadBankNames()">
+    <form>
+        <center>
+            <div class="row">
+                <div class="col-sm-5"></div>
+                <div class="col-sm-2"><label style="color:purple"><U>TRANSFER AMOUNT</U></label></div>
+                <div class="col-sm-5"></div>
+            </div><br>
+            <div class="row">
+                <div class="col-sm-3"></div>
+                <div class="col-sm-2"><label for=""> From account number:</label></div>
+                <div class="col-sm-3"><input type="number" disabled class="form-control" id="facno" name="facno"
+                        placeholder="enter account number"></div>
+                <div class="col-sm-4"></div>
+            </div><br>
+            <div class="row">
+                <div class="col-sm-3"></div>
+                <div class="col-sm-2"><label for="">Customer Name:</label></div>
+                <div class="col-sm-3"><input type="text" disabled class="form-control" id="custname" name="custname"
+                        placeholder="Enter Customer Name"></div>
+                <div class="col-sm-4"></div>
+            </div><br>
+            <div class="row">
+                <div class="col-sm-3"></div>
+                <div class="col-sm-2"><label for="">Type:</label></div>
+                <div class="col-sm-3"><select id="selectType" onchange="Gettype(this)" class="form-control" required>
+                        <option value="select">-------select------</option>
+                        <option value="Own Accounts">Own Accounts</option>
+                        <option value="Other Accounts">Other Accounts</option>
+                    </select></div>
+                <div class="col-sm-4"></div>
+            </div><br>
+            <div id="divSelf">
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-2"><label for=""> Select Account:</label></div>
+                    <div class="col-sm-3"><select id="selectAccount" class="form-control" required>
+                            <option value="select">-------select------</option>
+                        </select></div>
+                    <div class="col-sm-4"></div>
+                </div><br>
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-2"><label for="">Amount:</label></div>
+                    <div class="col-sm-3"><input type="text" class="form-control" id="txtamounts" name="txtamounts"
+                            placeholder="enter Amount" required></div>
+                    <div class="col-sm-4"></div>
+                </div><br>
+            </div>
+            <div id="divOthers">
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-2"><label for=""> To account number:</label></div>
+                    <div class="col-sm-3"><input type="number" class="form-control" id="tacno" name="tacno"
+                            placeholder="enter  account number" required></div>
+                    <div class="col-sm-4"></div>
+                </div><br>
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-2"><label for=""> Holder Name:</label></div>
+                    <div class="col-sm-3"><input type="text" class="form-control" id="txtholdername"
+                            name="txtholdername" placeholder="enter Holder Name" required></div>
+                    <div class="col-sm-4"></div>
+                </div><br>
+                <div class="row">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-2"><label for="">Amount:</label></div>
+                    <div class="col-sm-3"><input type="number" class="form-control" id="amount"
+                            placeholder="enter amount" required>
+                    </div>
+                    <div class="col-sm-4"></div>
+                </div><br>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-5"></div>
+                <div class="col-sm-2"><button type="submit" onclick="addTransaction()" class="btn btn-success">Send
+                        amount</button></div>
+                <div class="col-sm-5"></div>
+            </div><br>
+
+        </center>
+    </form>
+</body>

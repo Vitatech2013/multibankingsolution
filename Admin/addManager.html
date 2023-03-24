@@ -1,0 +1,166 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .form-control {
+        border: 1px solid black;
+        border-radius: 10px;
+    }
+</style><br><br>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function AddBankManager() {
+ event.preventDefault();	
+        const username = document.getElementById("username").value;
+        const password = Math.floor((Math.random() * 1000000) + 1);
+        const mobileno = document.getElementById("mobileno").value;
+        const address = document.getElementById("address").value;
+        const emailid = document.getElementById("email").value;
+        const bankname = document.getElementById("selectBank").value;
+        const branchname = document.getElementById("branchname").value;
+
+        const getRegPromise = performAjax(
+            "POST",
+            `http://localhost:7736/Admin/addManager`,
+            JSON.stringify({ username,password,mobileno,address,emailid,bankname, branchname})
+        );
+        getRegPromise
+            .then((regPromise) => {
+                alert('Manager Registered Successfully');
+                document.getElementById("username").value="";
+                document.getElementById("mobileno").value="";
+                document.getElementById("address").value="";
+                document.getElementById("email").value="";
+                document.getElementById("selectBank").value="";
+                document.getElementById("branchname").value="";
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+
+    function GetBranchName(name) {
+      const getBankPromise = performAjax(
+        "GET",
+        `http://localhost:7736/Admin/getBranchNames?bankname=${event.target.value}`
+      );
+      getBankPromise
+        .then((message) => {
+          banks = JSON.parse(message);
+          banks.map(bank => {
+            const branchname = bank.branchname;
+            document.getElementById("branchname").value = branchname;
+          });
+        })
+        .catch(err => {
+          alert(err.message);
+        })
+    }
+
+    function bindbanknames(bankName) {
+    
+      const data = JSON.parse(bankName);
+      let bank = document.getElementById("selectBank");
+      for (let i = 0; i < data.length; i++) {
+        let option = document.createElement("OPTION");
+        option.innerHTML = data[i].bankname;
+        option.value = data[i].bankname;
+        bank.options.add(option);
+      }
+    }
+
+    
+
+    function loadBankNames() {
+      
+      const getTourssPromise = performAjax("GET", "http://localhost:7736/Admin/getBankNames");
+      getTourssPromise
+        .then((response) => {
+           console.log(response);
+          bindbanknames(response);
+        })
+        .catch(err => {
+          alert(err.message);
+        })
+    }
+</script>
+<body onload="loadBankNames()">
+<form onsubmit="AddBankManager()">
+<center>
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><label style="color:purple"><U>Add Manager</U></label></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Name:</label></div>
+        <div class="col-sm-3"><input type="text" class="form-control" id="username" name="username"
+                placeholder="username" required></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Mobile number:</label></div>
+        <div class="col-sm-3"><input type="text" class="form-control" id="mobileno" placeholder="Mobile Number" maxlength="10" required pattern="[6-9]{1}[0-9]{9}">
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for=""> Address:</label></div>
+        <div class="col-sm-3"><textarea class="form-control" id="address" placeholder="Address" required></textarea></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Email id:</label></div>
+        <div class="col-sm-3"><input type="email" class="form-control" id="email" name="email" placeholder="Email Id" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Bank:</label></div>
+        <div class="col-sm-3"><select id="selectBank" onchange="GetBranchName(this)" class="form-control" required>
+                <option value="">--select--</option>
+				<option value="andhra">andhra</option>
+            </select></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Branch Name:</label></div>
+        <div class="col-sm-3"><input type="text" class="form-control" id="branchname" disabled name="branchname" placeholder="branchname" ></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+     
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><button type="submit"  class="btn btn-success">Add Manager</button></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+
+</center>
+</form>
+</body>

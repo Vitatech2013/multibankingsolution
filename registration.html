@@ -1,0 +1,122 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .form-control {
+        border: 1px solid black;
+        border-radius: 10px;
+    }
+</style><br><br>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function Register(event) {
+ event.preventDefault();
+        const username = document.getElementById("name").value;
+        const password = document.getElementById("password").value;
+        const mobileno = document.getElementById("mobno").value;
+        const address = document.getElementById("address").value;
+        const emailid = document.getElementById("emailid").value;
+        const dob = document.getElementById("dateofbirth").value;
+        const getRegPromise = performAjax(
+            "POST",
+            `http://localhost:7736/User/registration`,
+            JSON.stringify({ username, password, mobileno,address,emailid,dob})
+        );
+        getRegPromise
+            .then((regPromise) => {
+                alert('Customer Registerd Successfully');
+                document.getElementById("name").value = "";
+                document.getElementById("password").value = "";
+                document.getElementById("mobno").value = "";
+                document.getElementById("address").value = "";
+                document.getElementById("emailid").value = "";
+                document.getElementById("dateofbirth").value = "";
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+</script>
+<form onsubmit="Register()">
+<center>
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><label style="color:purple"><U>REGISTRATION</U></label></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">UserName:</label></div>
+        <div class="col-sm-3"><input type="text" class="form-control" id="name" name="name"
+                placeholder="User Name" required></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Password:</label></div>
+        <div class="col-sm-3"><input type="Password"  class="form-control"  placeholder="Password" id="password" name="password" required></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Mobile number:</label></div>
+        <div class="col-sm-3"><input type="text" class="form-control" id="mobno" placeholder="Mobile Number" maxlength="10" required pattern="[6-9]{1}[0-9]{9}">
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Address:</label></div>
+        <div class="col-sm-3"><textarea type="text" class="form-control" id="address" name="address" placeholder="Address" required></textarea>
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Email id:</label></div>
+        <div class="col-sm-3"><input type="email" class="form-control" id="emailid" name="email" placeholder="email id" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+        </div>
+        <div class="col-sm-4"></div>
+    </div><br>
+
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">Date of birth:</label></div>
+        <div class="col-sm-3"><input type="date" class="form-control" name="day" id="dateofbirth" required></div>
+        <div class="col-sm-4"></div>
+    </div><br>
+   
+
+
+   
+    
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><button type="submit"  class="btn btn-success">Register</button></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+
+</center>
+</form>

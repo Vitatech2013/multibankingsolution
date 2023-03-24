@@ -1,0 +1,67 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<style>
+    .form-control {
+        border: 1px solid black;
+        border-radius: 10px;
+    }
+</style><br><br>
+<body onload="myBalance()">
+    <script>
+        const username=sessionStorage.getItem("username");
+        const userid=sessionStorage.getItem("userid")
+        function performAjax(httpMethod, url, params) {
+            const myPromise = new Promise((resolve, reject) => {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        resolve(this.responseText);
+                    }
+                    if (this.status == 500) {
+                        reject({ error: true, message: "ServerError" });
+                    }
+                    if (this.status == 404) {
+                        reject({ error: true, message: "Resource not found" });
+                    }
+                };
+                xhttp.open(httpMethod, url, true);
+                xhttp.setRequestHeader("Content-Type", "application/json");
+                params ? xhttp.send(params) : xhttp.send();
+            });
+            return myPromise;
+        }
+    
+        function myBalance() {
+          
+            const accountno=sessionStorage.getItem("accountno");        
+            const getUsersPromise = performAjax("GET", `http://localhost:7736/User/getprevousamount?accountno=${accountno}`);
+            getUsersPromise
+            .then((data) => {
+                const profile = JSON.parse(data);
+                profile.map(rec => {
+                    document.getElementById("balance").value=rec.amount;
+                });
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+        }
+
+    </script>
+    </body>
+<center>
+    <div class="row">
+        <div class="col-sm-5"></div>
+        <div class="col-sm-2"><label style="color:purple"><U>Balance Enquiry</U></label></div>
+        <div class="col-sm-5"></div>
+    </div><br>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-2"><label for="">My Available Balance:</label></div>
+        <div class="col-sm-3"><input type="" class="form-control" disabled id="balance" name="balance"
+               ></div>
+        <div class="col-sm-4"></div>
+    </div>
+
+</center>

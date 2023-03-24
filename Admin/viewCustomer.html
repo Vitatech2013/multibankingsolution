@@ -1,0 +1,95 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+<html>
+<style>
+   .customers {
+  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.customers td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.customers tr:nth-child(even){background-color: #f2f2f2;}
+
+.customers tr:hover {background-color: #ddd;}
+
+.customers th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #4CAF50;
+  color: white;
+}
+</style>
+
+<body onload="loadData()">
+    <center>
+        <h3>Users Details</h3>
+        <table id="users" class="customers" style="width: 1000px;"></table>
+        <br><br><br>
+    </center>
+</body>
+
+</html>
+<script>
+    function performAjax(httpMethod, url, params) {
+        const myPromise = new Promise((resolve, reject) => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    resolve(this.responseText);
+                }
+                if (this.status == 500) {
+                    reject({ error: true, message: "ServerError" });
+                }
+                if (this.status == 404) {
+                    reject({ error: true, message: "Resource not found" });
+                }
+            };
+            xhttp.open(httpMethod, url, true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            params ? xhttp.send(params) : xhttp.send();
+        });
+        return myPromise;
+    }
+
+    function loadData() {
+        const getUsersPromise = performAjax("GET", "http://localhost:7736/Admin/viewUsers");
+        getUsersPromise
+            .then((usersList) => {
+                showUsersDetails(usersList);
+            })
+            .catch(err => {
+                alert(err.message);
+            })
+    }
+
+    function showUsersDetails(data) {
+        const records = JSON.parse(data);
+        let tableRow = '';
+        const tableHeader = `<tr style="background: lavender;"><th>S.No.</th><th>UserName</th><th>Mobile Number</th><th>Address</th><th>Emailid</th><th>DOB</th><th>View Accountss</th></tr>`;
+        if (records.length > 0) {
+            tableRow = records.map((rec, index) => {
+                let viewButton = `<a id="${rec._id}" class="glyphicon glyphicon-eye-open" style="color:blue; font-size:22px;" onclick="viewAccounts('${rec.username}')"></a>`;
+                return `<tr><td align="right">${index + 1}</td><td>${rec.username}</td><td>${rec.mobileno}</td><td>${rec.address}</td><td>${rec.emailid}</td><td>${rec.dob}</td><td>${viewButton}</td></tr>`;
+            });
+            document.getElementById("users").innerHTML = `${tableHeader}${tableRow.join('')}`;
+        }
+        else {
+            tableRow = `<tr><td colspan="6" align="center">No Data Found</td></tr>`;
+            document.getElementById("users").innerHTML = `${tableHeader}${tableRow}`;
+        }
+    }
+
+function viewAccounts(name) {
+  sessionStorage.setItem("uname", name);
+  window.location.href = "http://localhost:5894/user/viewAllAccounts";
+}
+
+</script>
